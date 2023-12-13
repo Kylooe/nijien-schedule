@@ -1,0 +1,45 @@
+export const VtuberIDs = [
+    'EliraPendora',
+    'PomuRainpuff',
+    'FinanaRyugu',
+    'Petra_Gurin',
+    'Selen_Tatsuki',
+    'Rosemi_Lovelock',
+    'EnnaAlouette',
+    'MillieParfait',
+    'ReimuEndou',
+    'luca_kaneshiro',
+    'ike_eveland',
+    'Vox_Akuma',
+    'shu_yamino',
+    'uki_violeta',
+    'fulgur_ovid',
+    'Sonny_Brisko',
+    'Alban_Knox',
+    'MariaMari0nette',
+    'KyoKanek0',
+    'AsterArcadia',
+    'AiaAmare',
+    'ScarleYonaguni',
+    'RenZott0',
+    'd_dropscythe',
+    'Ver_Vermillion',
+    'MelocoKyoran',
+    'KotokaTorahime',
+    'HexHaywire',
+    'YuQWilson',
+    'Tyrant_Vanta',
+    'VezaliusBandage',
+    'kunainakasato',
+    'vbrightshield',
+    'claudeclawmark',
+]
+
+export const BaseURL = 'https://api.twitter.com/graphql/'
+export const Authorization = 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs=1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA'
+
+export const GraphqlParams = {
+    UserByScreenName: 'NimuplG1OB7Fd2btCLdBOw',
+    TweetDetail: '4EQGUyO_lbCtGin4PT7MOQ',
+    TweetResultByRestId: 'R5zbJueOwsdIMWs3CyE0Iw',
+}
