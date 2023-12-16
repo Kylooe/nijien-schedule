@@ -1,21 +1,41 @@
 import axios from 'axios'
 import fs from 'fs'
-import { Authorization, BaseURL, GraphqlParams, VtuberIDs } from './constants.js'
+import { BaseURL, defaultHeaders, GraphqlParams, VtuberIDs } from './constants.js'
 
 const client = axios.create({
     baseURL: BaseURL,
-    headers: {
-        accept: '*/*',
-        authorization: Authorization,
-        'content-type': 'application/json; charset=utf-8',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        // 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-        // 'x-twitter-active-user': 'yes',
-        // 'x-twitter-client-language': 'zh-cn',
-        // Referer: 'https://twitter.com/',
+    headers: defaultHeaders,
+})
+
+client.interceptors.request.use((config) => {
+    if (config.method === 'get') {
+        config.headers['x-guest-token'] = client.defaults.headers.get['x-guest-token'] || process.env.GUEST_TOKEN
     }
+    return config
+}, (error) => {
+    return Promise.reject(error)
+})
+
+client.interceptors.response.use((response) => {
+    return response
+}, (error) => {
+
+    if (error.response) {
+        console.log('error response: ', error.response.data)
+        if (error.response.data.errors?.[0].code === 239 ) { // need to fetch new guest token
+            return getGuestToken().then((token) => {
+                console.log('new token generated: ', token)
+                client.defaults.headers.get['x-guest-token'] = token
+                error.config.headers.set('x-guest-token', token)
+                return client.request(error.config) 
+            })
+        }
+
+        return Promise.reject(`${error.response.status}\n${JSON.stringify(error.response.data)}]}`)
+    } else if (error.request) {
+        return Promise.reject(`no res: ${error.request}`)
+    }
+    return Promise.reject(`request settings error, ${error.message}`)
 })
 
 function buildParams(params) {
@@ -26,12 +46,9 @@ function buildParams(params) {
     return formattedParams
 }
 
-async function getPinnedTweet(username = '') {
+function getPinnedTweet(username = '') {
     const url = `${GraphqlParams.UserByScreenName}/UserByScreenName`
     const request = client.get(url, {
-        headers: {
-            'x-guest-token': '1734877265836785706',
-        },
         params: buildParams({
             variables: {
                 screen_name: username,
@@ -52,20 +69,16 @@ async function getPinnedTweet(username = '') {
             },
         })
     })
-    return request.then((res) => {
-        console.log('getpinned', username)
-        return res.data?.data?.user?.result?.legacy?.pinned_tweet_ids_str
+    return request.then(({ data }) => {
+        return data.data?.user?.result?.legacy?.pinned_tweet_ids_str
     }).catch((err) => {
-        console.error(`getPinnedTweet for ${username} failed: `, err.response?.status, '\n', err.response?.data?.errors)
+        throw new Error(`getPinnedTweet for ${username} failed: ${err}`)
     })
 }
 
 function getTweetDetails(id = '') {
     const url = `${GraphqlParams.TweetResultByRestId}/TweetResultByRestId`
     const request = client.get(url, {
-        headers: {
-            'x-guest-token': '1734877265836785706',
-        },
         params: buildParams({
             variables: {
                 tweetId: id,
@@ -99,33 +112,54 @@ function getTweetDetails(id = '') {
         })
     })
     return request.then(({ data }) => {
-        console.log('getTweetDetails', id)
         if (data?.data?.tweetResult?.result?.legacy) {
-            const { created_at, full_text, entities } = data.data.tweetResult.result.legacy
+            const { created_at, full_text, entities, id_str } = data.data.tweetResult.result.legacy
             return {
+                id: id_str,
                 created_at,
                 full_text,
-                img: entities?.media?.[0]?.media_url_https
+                img: entities?.media?.[0]?.media_url_https,
             }
         }
     }).catch((err) => {
-        console.error(`getTweetDetails for ${id} failed: `, err.response?.status, '\n', err.response?.data?.errors)
+        throw new Error(`getTweetDetails for ${id} failed: ${err}`)
     })
 }
 
 async function updateData() {
-    const data = {}
+    let data = {}
+
+    fs.readFile('../public/test.json', (err, res) => {
+        if (err) {
+            throw new Error(`load json failed: ${err}`)
+        }
+        data = JSON.parse(res)
+    })
+
     for (let i = 0; i < VtuberIDs.length; i++) {
-        console.log(i)
-        const id = VtuberIDs[i]
-        const pinnedTweets = await getPinnedTweet(id)
+        const vtuberID = VtuberIDs[i]
+        const pinnedTweets = await getPinnedTweet(vtuberID)
         if (pinnedTweets?.length) {
             const tweetDetails = await getTweetDetails(pinnedTweets?.[0])
-            if (tweetDetails) data[id] = tweetDetails
+            if (tweetDetails) {
+                console.log('success get pinned tweet for', vtuberID)
+                if (!data[vtuberID] || (data[vtuberID].id !== tweetDetails.id && !!tweetDetails.img)) {
+                    data[vtuberID] = tweetDetails
+                }
+            }
         }
     }
-    fs.writeFile('./data/test.json', JSON.stringify(data), (err) => {
+
+    fs.writeFile('../public/test.json', JSON.stringify(data), (err) => {
         if (err) console.error(err)
+    })
+}
+
+function getGuestToken() {
+    return client.post('https://api.twitter.com/1.1/guest/activate.json').then(({ data }) => {
+        return data.guest_token
+    }).catch((err) => {
+        throw new Error(`getGuestToken failed: ${err}`)
     })
 }
 
