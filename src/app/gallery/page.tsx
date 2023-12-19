@@ -9,8 +9,14 @@ import data from 'public/test.json'
 import { vtubers } from '@/lib/constants'
 
 type VtuberTwitterID = keyof typeof data
+interface Vtuber {
+  name: string
+  twitter: VtuberTwitterID
+  color: string
+  group: string
+}
 
-const list = groupBy(vtubers, 'group')
+const list = groupBy(vtubers, 'group') as Record<string, Vtuber[]>
 
 // const Scrollbars = dynamic(() => import('rc-scrollbars'), { ssr: false })
 
@@ -28,40 +34,38 @@ const Gallery: React.FC = () => {
   // }
 
   return (
-    <div>
+    <div className="w-full">
     {/* <Scrollbars> */}
       {keys(list).map((group) => (
         <div key={group} className="flex justify-between items-stretch flex-nowrap">
           {list[group].map((item) => (
-            <div
-              key={item.name}
-              className={`flex-1 ${/Aia|Sonny|YuQ/.test(item.twitter) ? 'text-black' : 'text-white'}`}
-            >
-              {data[item.twitter as VtuberTwitterID] ? (
-                <Image
-                  src={data[item.twitter as VtuberTwitterID].img}
-                  width={1200}
-                  height={675}
-                  sizes={`${100 / list[group].length}vw`}
-                  alt={item.name}
-                  className="hover:opacity-75 cursor-pointer"
-                  onClick={() => {
-                    setTargetImg(data[item.twitter as VtuberTwitterID].img)
+            data[item.twitter] ? (
+              <div
+                key={item.name}
+                className="basis-0 hover:opacity-75 cursor-pointer"
+                style={{ flexGrow: data[item.twitter].width / data[item.twitter].height }}
+              >
+              <Image
+                src={data[item.twitter].img}
+                width={data[item.twitter].width}
+                height={data[item.twitter].height}
+                alt={item.name}
+                className="hover:opacity-75 cursor-pointer"
+                onClick={() => {
+                    setTargetImg(data[item.twitter].img)
                     setIsActive(true)
-                  }}
-                />
-              ) : (
-                <div
-                  className="flex justify-center items-center h-full"
-                  style={{
-                    height: `${100 / list[group].length * 675 / 1200}vw`,
-                    backgroundColor: item.color,
-                  }}
-                >
-                  <p className="font-bold text-xl">{item.name}</p>
-                </div>
-              )}
-            </div>
+                }}
+              />
+              </div>
+            ): (
+              <div
+                key={item.name}
+                className="flex-1 flex justify-center items-center py-8"
+                style={{ backgroundColor: item.color }}
+              >
+                <p className={`font-bold text-xl ${/Aia|Sonny|YuQ/.test(item.twitter) ? 'text-black' : 'text-white'}`}>{item.name}</p>
+              </div>
+            )
           ))}
         </div>
       ))}
@@ -76,7 +80,7 @@ const Gallery: React.FC = () => {
             width={1200}
             height={675}
             alt="schedule"
-            className="max-w-screen"
+            className="max-w-screen max-h-screen object-contain"
           />
         </div>
       )}
