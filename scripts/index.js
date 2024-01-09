@@ -1,19 +1,15 @@
-import axios from 'axios'
 import fs from 'fs'
+import axios from 'axios'
 import { BaseURL, defaultHeaders, GraphqlParams, VtuberIDs } from './constants.js'
 
 const client = axios.create({
     baseURL: BaseURL,
-    headers: defaultHeaders,
-})
-
-client.interceptors.request.use((config) => {
-    if (config.method === 'get') {
-        config.headers['x-guest-token'] = client.defaults.headers.get['x-guest-token'] || process.env.GUEST_TOKEN
-    }
-    return config
-}, (error) => {
-    return Promise.reject(error)
+    headers: {
+        ...defaultHeaders,
+        get: {
+            'x-guest-token': fs.readFileSync('guest-token', 'utf8'),
+        },
+    },
 })
 
 client.interceptors.response.use((response) => {
@@ -25,9 +21,19 @@ client.interceptors.response.use((response) => {
         if (error.response.data.errors?.[0].code === 239 ) { // need to fetch new guest token
             return getGuestToken().then((token) => {
                 console.log('new token generated: ', token)
+                fs.writeFile('guest-token', token, (err) => {
+                    if (err) console.error('guest token file writing error', err)
+                })
                 client.defaults.headers.get['x-guest-token'] = token
                 error.config.headers.set('x-guest-token', token)
                 return client.request(error.config) 
+            })
+        } else if (error.response.data.code === 88 ) { // rate limit exceeded, need to retry
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    console.log('retry to fetch new token')
+                    resolve(client.request(error.config))
+                }, 1000)
             })
         }
 
@@ -119,6 +125,9 @@ function getTweetDetails(id = '') {
                 created_at,
                 full_text,
                 img: entities?.media?.[0]?.media_url_https,
+                height: entities?.media?.[0]?.sizes?.medium?.h,
+                width: entities?.media?.[0]?.sizes?.medium?.w,
+                type: entities?.media?.[0]?.type,
             }
         }
     }).catch((err) => {
@@ -126,14 +135,25 @@ function getTweetDetails(id = '') {
     })
 }
 
+function getLastSaturday() {
+    let date = new Date()
+    const day = date.getDay()
+    if (day !== 6) {
+        date.setDate(date.getDate() - day - 1)
+    }
+    return `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
+}
+
 async function updateData() {
     let data = {}
-
-    fs.readFile('../public/test.json', (err, res) => {
+    const filename = getLastSaturday()
+    fs.readFile(`../public/data/${filename}.json`, (err, res) => {
         if (err) {
+            if (err.code === 'ENOENT') return
             throw new Error(`load json failed: ${err}`)
+        } else{
+            data = JSON.parse(res)
         }
-        data = JSON.parse(res)
     })
 
     for (let i = 0; i < VtuberIDs.length; i++) {
@@ -143,14 +163,13 @@ async function updateData() {
             const tweetDetails = await getTweetDetails(pinnedTweets?.[0])
             if (tweetDetails) {
                 console.log('success get pinned tweet for', vtuberID)
-                if (!data[vtuberID] || (data[vtuberID].id !== tweetDetails.id && !!tweetDetails.img)) {
+                if (!data[vtuberID] || (data[vtuberID].id !== tweetDetails.id && tweetDetails.type === 'photo')) {
                     data[vtuberID] = tweetDetails
                 }
             }
         }
     }
-
-    fs.writeFile('../public/test.json', JSON.stringify(data), (err) => {
+    fs.writeFile(`../public/data/${filename}.json`, JSON.stringify(data), (err) => {
         if (err) console.error(err)
     })
 }

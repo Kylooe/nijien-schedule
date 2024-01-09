@@ -43,7 +43,7 @@ const Gallery: React.FC = () => {
               <div
                 key={item.name}
                 className="basis-0 hover:opacity-75 cursor-pointer"
-                style={{ flexGrow: data[item.twitter].width / data[item.twitter].height }}
+                style={{ flexGrow: data[item.twitter].width / (data[item.twitter].height ?? 1) }}
               >
               <Image
                 src={data[item.twitter].img}
