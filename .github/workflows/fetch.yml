@@ -10,6 +10,8 @@ on:
 jobs:
   update_data:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Update tweets json for new week
