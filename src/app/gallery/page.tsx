@@ -5,22 +5,25 @@ import * as React from 'react'
 import Image from 'next/image'
 import { groupBy, keys } from 'lodash'
 
-import data from 'public/test.json'
 import { vtubers } from '@/lib/constants'
+import { getLastSaturday } from '@/lib/utils'
 
-type VtuberTwitterID = keyof typeof data
-interface Vtuber {
-  name: string
-  twitter: VtuberTwitterID
-  color: string
-  group: string
+interface Data {
+  [key: string]: {
+    id: string
+    img: string
+    width: number
+    height: number
+  }
 }
 
-const list = groupBy(vtubers, 'group') as Record<string, Vtuber[]>
+const list = groupBy(vtubers, 'group')
 
 // const Scrollbars = dynamic(() => import('rc-scrollbars'), { ssr: false })
 
 const Gallery: React.FC = () => {
+  const [data, setData] = React.useState<Data>({})
+  
   // const [isClient, setIsClient] = React.useState(false)
   const [isActive, setIsActive] = React.useState(false)
   const [targetImg, setTargetImg] = React.useState('')
@@ -32,6 +35,14 @@ const Gallery: React.FC = () => {
   // if (!isClient) {
   //   return null
   // }
+
+  React.useEffect(() => {
+    const fileName = getLastSaturday()
+
+    fetch(`data/${fileName}.json`).then((res) => res.json()).then((res: Data) => {
+      setData(res)
+    })
+  }, [])
 
   return (
     <div className="w-full">
