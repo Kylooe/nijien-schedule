@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
+  assetPrefix: '/nijien-schedule/',
   images: {
     remotePatterns: [
       {
