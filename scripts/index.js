@@ -161,7 +161,6 @@ async function updateData() {
             }
         }
     }
-    fs.writeFile(`../public/data/${filename}.json`, JSON.stringify(data), (err) => {
     fs.writeFile(`../public/data/${filename}.json`, JSON.stringify(data, null, 2), (err) => {
         if (err) console.error(err)
     })
