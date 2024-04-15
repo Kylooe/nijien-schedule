@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  assetPrefix: '/nijien-schedule/',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/nijien-schedule/' : undefined,
   images: {
     remotePatterns: [
       {
@@ -11,6 +11,7 @@ const nextConfig = {
         pathname: '/media/**',
       },
     ],
+    unoptimized: true,
   },
 }
 

@@ -50,11 +50,11 @@ const Gallery: React.FC = () => {
       {keys(list).map((group) => (
         <div key={group} className="flex justify-between items-stretch flex-nowrap">
           {list[group].map((item) => (
-            data[item.twitter] ? (
+            data[item.twitter]?.img ? (
               <div
                 key={item.name}
                 className="basis-0 hover:opacity-75 cursor-pointer"
-                style={{ flexGrow: data[item.twitter].width / (data[item.twitter].height ?? 1) }}
+                style={{ flexGrow: (data[item.twitter].width / (data[item.twitter].height) ?? 1) }}
               >
               <Image
                 src={data[item.twitter].img}
@@ -63,18 +63,28 @@ const Gallery: React.FC = () => {
                 alt={item.name}
                 className="hover:opacity-75 cursor-pointer"
                 onClick={() => {
-                    setTargetImg(data[item.twitter].img)
-                    setIsActive(true)
+                  setTargetImg(data[item.twitter].img)
+                  setIsActive(true)
                 }}
               />
               </div>
             ): (
               <div
                 key={item.name}
-                className="flex-1 flex justify-center items-center py-8"
+                className="flex-1 flex flex-col justify-center items-center py-8"
                 style={{ backgroundColor: item.color }}
               >
-                <p className={`font-bold text-xl ${/Aia|Sonny|YuQ/.test(item.twitter) ? 'text-black' : 'text-white'}`}>{item.name}</p>
+                <p className={`${item.graduated ? 'line-through' : ''} font-bold text-xl ${/Aia|Sonny|YuQ/.test(item.twitter) ? 'text-black' : 'text-white'}`}>{item.name}</p>
+                {!item.graduated && (
+                  <div>
+                    <a
+                      href={`https://twitter.com/${item.twitter}`}
+                      target='_blank'
+                    >
+                      twitter
+                    </a>
+                  </div>
+                )}
               </div>
             )
           ))}
