@@ -1,6 +1,7 @@
 import fs from 'fs'
 import axios from 'axios'
 import { BaseURL, defaultHeaders, GraphqlParams, VtuberIDs } from './constants.js'
+import { getLastSaturdayString, getIsNewTweet } from './utils.js'
 
 const client = axios.create({
     baseURL: BaseURL,
@@ -135,18 +136,9 @@ function getTweetDetails(id = '') {
     })
 }
 
-function getLastSaturday() {
-    let date = new Date()
-    const day = date.getDay()
-    if (day !== 6) {
-        date.setDate(date.getDate() - day - 1)
-    }
-    return `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
-}
-
 async function updateData() {
     let data = {}
-    const filename = getLastSaturday()
+    const filename = getLastSaturdayString()
     fs.readFile(`../public/data/${filename}.json`, (err, res) => {
         if (err) {
             if (err.code === 'ENOENT') return
@@ -163,13 +155,14 @@ async function updateData() {
             const tweetDetails = await getTweetDetails(pinnedTweets?.[0])
             if (tweetDetails) {
                 console.log('success get pinned tweet for', vtuberID)
-                if (!data[vtuberID] || (data[vtuberID].id !== tweetDetails.id && tweetDetails.type === 'photo')) {
+                if ((!data[vtuberID] && getIsNewTweet(tweetDetails.created_at)) || (data[vtuberID].id !== tweetDetails.id && tweetDetails.type === 'photo')) {
                     data[vtuberID] = tweetDetails
                 }
             }
         }
     }
     fs.writeFile(`../public/data/${filename}.json`, JSON.stringify(data), (err) => {
+    fs.writeFile(`../public/data/${filename}.json`, JSON.stringify(data, null, 2), (err) => {
         if (err) console.error(err)
     })
 }
