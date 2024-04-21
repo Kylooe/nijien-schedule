@@ -155,7 +155,7 @@ async function updateData() {
             const tweetDetails = await getTweetDetails(pinnedTweets?.[0])
             if (tweetDetails) {
                 console.log('success get pinned tweet for', vtuberID)
-                if ((!data[vtuberID] && getIsNewTweet(tweetDetails.created_at)) || (data[vtuberID].id !== tweetDetails.id && tweetDetails.type === 'photo')) {
+                if ((!data[vtuberID] && getIsNewTweet(tweetDetails.created_at)) || (data[vtuberID]?.id !== tweetDetails.id && tweetDetails.type === 'photo')) {
                     data[vtuberID] = tweetDetails
                 }
             }
