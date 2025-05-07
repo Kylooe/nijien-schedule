@@ -97,5 +97,23 @@
     "height": 780,
     "width": 1200,
     "type": "photo"
+  },
+  "Rosemi_Lovelock": {
+    "id": "1919605125380804820",
+    "created_at": "Tue May 06 04:08:21 +0000 2025",
+    "full_text": "https://t.co/9tbftLYXC8",
+    "img": "https://pbs.twimg.com/media/GqPOeA_W4AETUqz.jpg",
+    "height": 675,
+    "width": 1200,
+    "type": "photo"
+  },
+  "luca_kaneshiro": {
+    "id": "1919854523960721816",
+    "created_at": "Tue May 06 20:39:22 +0000 2025",
+    "full_text": "SCHEDULE!!!!!!!! 😎👍 https://t.co/PSWPoqYQVr",
+    "img": "https://pbs.twimg.com/media/GqSxEkUbAAQ7Etc.jpg",
+    "height": 780,
+    "width": 1200,
+    "type": "photo"
   }
 }
